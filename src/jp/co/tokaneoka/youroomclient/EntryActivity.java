@@ -2,9 +2,11 @@ package jp.co.tokaneoka.youroomclient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 
 import jp.co.tokaneoka.youroomclient.R;
+import jp.co.tokaneoka.youroomclient.RoomActivity.GetRoomEntryTask;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,35 +22,54 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class EntryActivity extends Activity {
+public class EntryActivity extends Activity implements OnClickListener {
 
 	String roomId;
 	YouRoomChildEntryAdapter adapter;
 	ProgressDialog progressDialog;
 	int parentEntryCount;
 	int requestCount;
+	Intent intent;
+
+	private final static int MAX_LEVEL = 5;
+
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		setContentView(R.layout.entry_list);
+
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
 
-		setContentView(R.layout.main);
-
-		Intent intent = getIntent();
+//<<<<<<< HEAD
+//		setContentView(R.layout.main);
+//
+//		Intent intent = getIntent();
+//=======
+		intent = getIntent();
+//>>>>>>> 4a4995765a7948ebcef80db90b4044473159ffa5
 		roomId = intent.getStringExtra("roomId");
 		YouRoomEntry youRoomEntry = (YouRoomEntry) intent
 				.getSerializableExtra("youRoomEntry");
 		String entryId = String.valueOf(youRoomEntry.getId());
+
+		Button postButton = (Button) findViewById(R.id.post_button);
+		postButton.setText(getString(R.string.post_button));
+		postButton.setOnClickListener(this);
 		parentEntryCount = youRoomEntry.getDescendantsCount();
 
 		// TODO if String decodeResult = "";
@@ -65,12 +86,33 @@ public class EntryActivity extends Activity {
 				dataList);
 		listView.setAdapter(adapter);
 
+		listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				ListView listView = (ListView) parent;
+				YouRoomEntry item = (YouRoomEntry) listView
+						.getItemAtPosition(position);
+				if (item.getLevel() == MAX_LEVEL)
+					Toast.makeText(getBaseContext(),
+							getString(R.string.deps_max), Toast.LENGTH_SHORT)
+							.show();
+				else {
+					Intent intentCreateEntry = new Intent(getApplication(),
+							CreateEntryActivity.class);
+					intentCreateEntry.putExtra("roomId", String.valueOf(roomId));
+					intentCreateEntry.putExtra("youRoomEntry", item);
+
+					startActivity(intent);
+				}
+			}
+		});
+
 		GetChildEntryTask task = new GetChildEntryTask(roomId);
 		try {
 			task.execute(youRoomEntry);
 		} catch (RejectedExecutionException e) {
-			// TODO
-			// AsyncTaskでは内部的にキューを持っていますが、このキューサイズを超えるタスクをexecuteすると、ブロックされずに例外が発生します。らしいので、一旦握りつぶしている
+			// TODO AsyncTaskでは内部的にキューを持っていますが、このキューサイズを超えるタスクをexecuteすると、ブロックされずに例外が発生します。らしいので、一旦握りつぶしている
 			e.printStackTrace();
 		}
 	}
@@ -109,10 +151,10 @@ public class EntryActivity extends Activity {
 			if (name != null) {
 				name.setText(roomEntry.getParticipationName());
 			}
-			if (updateTime != null) {
+
+			if ( updateTime != null ){
 				updateTime.setTextColor(Color.LTGRAY);
-				updateTime.setText(YouRoomUtil.convertDatetime(roomEntry
-						.getUpdatedTime()));
+				updateTime.setText(YouRoomUtil.convertDatetime(roomEntry.getUpdatedTime()));
 			}
 			if (content != null) {
 				content.setText(roomEntry.getContent());
@@ -124,12 +166,11 @@ public class EntryActivity extends Activity {
 				level.setText(commentLevel);
 			}
 
-			UserSession session = UserSession.getInstance();
-			String roomAccessTime = session.getRoomAccessTime(roomId);
-			if (roomAccessTime != null) {
-				int compareResult = YouRoomUtil.calendarCompareTo(
-						roomAccessTime, roomEntry.getUpdatedTime());
-				if (compareResult < 0) {
+	    	UserSession session = UserSession.getInstance();
+	    	String roomAccessTime = session.getRoomAccessTime(roomId);
+	    	if ( roomAccessTime != null ) {
+				int compareResult = YouRoomUtil.calendarCompareTo(roomAccessTime, roomEntry.getUpdatedTime());
+				if ( compareResult < 0 ){
 					updateTime.setTextColor(Color.RED);
 				}
 			}
@@ -222,9 +263,8 @@ public class EntryActivity extends Activity {
 			synchronized (objLock) {
 				if (dataChildList.size() > 0) {
 					for (int i = 0; i < dataChildList.size(); i++) {
-						adapter.insert(dataChildList.get(i), adapter
-								.getPosition(roomChildEntry)
-								+ i + 1);
+						adapter.insert(dataChildList.get(i),
+								adapter.getPosition(roomChildEntry) + i + 1);
 					}
 				}
 				requestCount++;
@@ -246,4 +286,17 @@ public class EntryActivity extends Activity {
 		progressDialog.setCancelable(true);
 	}
 
+	@Override
+	public void onClick(View v) {
+		// TODO Auto-generated method stub
+		YouRoomEntry youRoomEntry = (YouRoomEntry) intent
+		.getSerializableExtra("youRoomEntry");
+		Intent intentCreateEntry = new Intent(getApplication(),
+				CreateEntryActivity.class);
+		intentCreateEntry.putExtra("roomId", String.valueOf(roomId));
+		intentCreateEntry.putExtra("youRoomEntry", youRoomEntry);
+
+		startActivity(intentCreateEntry);
+
+	}
 }

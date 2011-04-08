@@ -82,20 +82,31 @@ public class LoginActivity extends Activity implements OnClickListener {
 	private boolean Login(String username, String password) {
 
 		boolean check = false;
-
-		Map<String, String> xauthParameterMap = new HashMap<String, String>();
-		HashMap<String, String> resultMap = new HashMap<String, String>();
-
-		try {
-			xauthParameterMap.put("x_auth_mode", SignatureEncode
-					.encode("client_auth"));
-			xauthParameterMap.put("x_auth_username", SignatureEncode
-					.encode(username));
-			xauthParameterMap.put("x_auth_password", SignatureEncode
-					.encode(password));
-		} catch (UnsupportedEncodingException ignore) {
-		}
-
+//<<<<<<< HEAD
+//
+//		Map<String, String> xauthParameterMap = new HashMap<String, String>();
+//		HashMap<String, String> resultMap = new HashMap<String, String>();
+//
+//		try {
+//			xauthParameterMap.put("x_auth_mode", SignatureEncode
+//					.encode("client_auth"));
+//			xauthParameterMap.put("x_auth_username", SignatureEncode
+//					.encode(username));
+//			xauthParameterMap.put("x_auth_password", SignatureEncode
+//					.encode(password));
+//		} catch (UnsupportedEncodingException ignore) {
+//		}
+//
+//=======
+		
+		Map<String, String> xauthParameterMap = new HashMap<String, String>();		
+    	HashMap<String, String> resultMap = new HashMap<String, String>();
+    	
+    		xauthParameterMap.put("x_auth_mode", "client_auth");
+    		xauthParameterMap.put("x_auth_username", username);
+    		xauthParameterMap.put("x_auth_password", password);
+    	    	
+//>>>>>>> 4a4995765a7948ebcef80db90b4044473159ffa5
 		Xauth xAuth = new Xauth(xauthParameterMap);
 		resultMap = xAuth.getAccessToken();
 

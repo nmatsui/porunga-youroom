@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import jp.co.tokaneoka.youroomclient.R;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,14 +18,17 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class RoomActivity extends Activity {
+public class RoomActivity extends Activity implements OnClickListener {
 	/** Called when the activity is first created. */
 
 	private String roomId;
@@ -37,11 +38,18 @@ public class RoomActivity extends Activity {
 	private int page = 1;
 	private YouRoomUtil youRoomUtil = new YouRoomUtil(this);
 
+	private YouRoomGroup group;
+	private EditText entryContentText;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		setContentView(R.layout.main);
+//		this.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); 
+		setContentView(R.layout.room_list);
+		
+		Button postButton = (Button) findViewById(R.id.post_button);
+		postButton.setText(getString(R.string.post_button));
+		postButton.setOnClickListener(this);
 
 		Intent intent = getIntent();
 		roomId = intent.getStringExtra("roomId");
@@ -53,14 +61,12 @@ public class RoomActivity extends Activity {
 		setProgressDialog(progressDialog);
 		progressDialog.show();
 
-		// RoomEntry�̎擾
 		Map<String, String> parameterMap = new HashMap<String, String>();
 		parameterMap.put("page", String.valueOf(page));
 		GetRoomEntryTask task = new GetRoomEntryTask(roomId, parameterMap);
 		task.execute();
 		page++;
 
-		// FooterView�̐ݒ�
 		final TextView textview = new TextView(this);
 		textview.setText("-----読み込み-----");
 		textview.setMinHeight(50);
@@ -85,25 +91,35 @@ public class RoomActivity extends Activity {
 					page++;
 				} else {
 					ListView listView = (ListView) parent;
+
 					YouRoomEntry item = (YouRoomEntry) listView
 							.getItemAtPosition(position);
 					if (item.getDescendantsCount() == -1) {
 						Toast.makeText(getApplication(),
 								"読み込み中です。もう少しおまちください。", Toast.LENGTH_SHORT)
 								.show();
-					} else {
-						/*
-						 * UserSession session = UserSession.getInstance();
-						 * String lastAccessTime =
-						 * youRoomUtil.getRoomAccessTime(roomId);
-						 * session.setRoomAccessTime(roomId, lastAccessTime);
-						 * String time = YouRoomUtil.getRFC3339FormattedTime();
-						 * youRoomUtil.storeRoomAccessTime(roomId, time);
-						 */
+					} else if(item.getDescendantsCount() == 0){
 						Intent intent = new Intent(getApplication(),
-								EntryActivity.class);
+								CreateEntryActivity.class);
 						intent.putExtra("roomId", String.valueOf(roomId));
 						intent.putExtra("youRoomEntry", item);
+						
+						startActivity(intent);
+					}else {
+					
+
+						/*
+				    	UserSession session = UserSession.getInstance();
+				    	String lastAccessTime = youRoomUtil.getRoomAccessTime(roomId);
+				    	session.setRoomAccessTime(roomId, lastAccessTime);						
+				    	String time = YouRoomUtil.getRFC3339FormattedTime();						
+				    	youRoomUtil.storeRoomAccessTime(roomId, time);
+						*/
+
+						Intent intent = new Intent(getApplication(), 
+								EntryActivity.class);
+						intent.putExtra("roomId", String.valueOf(roomId) );
+						intent.putExtra("youRoomEntry", item);				    	
 						startActivity(intent);
 					}
 				}
@@ -171,12 +187,12 @@ public class RoomActivity extends Activity {
 				descendantsCount.setText("[ " + count + "comments ] > ");
 			}
 
-			UserSession session = UserSession.getInstance();
-			String roomAccessTime = session.getRoomAccessTime(roomId);
-			if (roomAccessTime != null) {
+	    	UserSession session = UserSession.getInstance();
+	    	String roomAccessTime = session.getRoomAccessTime(roomId);
+	    	if ( roomAccessTime != null ) {
 				int compareResult = YouRoomUtil.calendarCompareTo(
 						roomAccessTime, roomEntry.getUpdatedTime());
-				if (compareResult < 0) {
+				if ( compareResult < 0 ){
 					createdTime.setTextColor(Color.RED);
 				}
 			}
@@ -206,8 +222,8 @@ public class RoomActivity extends Activity {
 			HashMap<String, String> oAuthTokenMap = youRoomUtil
 					.getOauthTokenFromLocal();
 			YouRoomCommand youRoomCommand = new YouRoomCommand(oAuthTokenMap);
-			String entry = youRoomCommand.getEntry(roomId, String
-					.valueOf(entryIds[0]));
+			String entry = youRoomCommand.getEntry(roomId,
+					String.valueOf(entryIds[0]));
 
 			try {
 				JSONObject json = new JSONObject(entry);
@@ -305,4 +321,18 @@ public class RoomActivity extends Activity {
 		progressDialog.setCancelable(true);
 	}
 
+	@Override
+	public void onClick(View arg0) {
+		
+		// TODO Auto-generated method stub
+
+		Intent intent = new Intent(getApplication(),
+				CreateEntryActivity.class);
+		intent.putExtra("roomId", String.valueOf(roomId));
+		intent.putExtra("youRoomEntry", new YouRoomEntry());
+
+		startActivity(intent);
+
+
+	}
 }

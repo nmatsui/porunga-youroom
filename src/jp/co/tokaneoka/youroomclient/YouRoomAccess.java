@@ -1,35 +1,35 @@
 package jp.co.tokaneoka.youroomclient;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 
 public class YouRoomAccess {
 
-	private static final String CONSUMER_KEY = "***************";
-	private static final String CONSUMER_SECRET = "***************";
+	private static final String CONSUMER_KEY = "****";
+	private static final String CONSUMER_SECRET = "****";
 
 	private static final String SIGNATURE_METHOD = "HMAC-SHA1";
 	private static final String OAUTH_VERSION = "1.0";
@@ -67,8 +67,7 @@ public class YouRoomAccess {
 		this.oauthTokenSecret = oauthTokenSecret;
 	}
 
-	public HttpResponse requestPost() {
-
+	public HttpResponse authenticate() {
 		oauthParametersMap = createParametersMap();
 		String apiParamter = createParameters();
 		HttpResponse objResponse = null;
@@ -76,6 +75,50 @@ public class YouRoomAccess {
 		HttpClient objHttp = new DefaultHttpClient();
 		HttpPost objPost = new HttpPost(api
 				+ (apiParamter.length() > 0 ? "?" + apiParamter : ""));
+		try {
+			objPost.addHeader("Authorization", createAuthorizationValue());
+			objResponse = objHttp.execute(objPost);
+		} catch (InvalidKeyException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (ClientProtocolException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return objResponse;
+	}
+
+	public HttpResponse requestPost() {
+		oauthParametersMap = createParametersMap();
+		String apiParamter = createParameters();
+		HttpResponse objResponse = null;
+
+		HttpClient objHttp = new DefaultHttpClient();
+		
+		HttpPost objPost = new HttpPost(api);
+
+		if (parameterMap != null && parameterMap.size() > 0) {
+			HttpEntity entity = null;
+			final List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+			for (Map.Entry<String, String> param : parameterMap.entrySet()) {
+				params.add(new BasicNameValuePair(param.getKey(), param
+						.getValue()));
+			}
+
+			try {
+				entity = new UrlEncodedFormEntity(params, HTTP.UTF_8);
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			objPost.setEntity(entity);
+		}
+
 		try {
 			objPost.addHeader("Authorization", createAuthorizationValue());
 			objResponse = objHttp.execute(objPost);
@@ -152,11 +195,15 @@ public class YouRoomAccess {
 		}
 		StringBuilder builder = new StringBuilder();
 		for (Map.Entry<String, String> param : parameterMap.entrySet()) {
+
 			builder.append(param.getKey() + "=");
 			builder.append(param.getValue());
 			builder.append("&");
+
 		}
+		
 		return builder.toString().substring(0, builder.length() - 1);
+
 	}
 
 	private String createAuthorizationValue() throws InvalidKeyException,
@@ -197,7 +244,12 @@ public class YouRoomAccess {
 	private String getRequestParameters() {
 		if (parameterMap != null && parameterMap.size() > 0) {
 			for (Map.Entry<String, String> param : parameterMap.entrySet()) {
-				oauthParametersMap.put(param.getKey(), param.getValue());
+				try {
+					oauthParametersMap.put(SignatureEncode.encode(param.getKey()), SignatureEncode.encode(param.getValue()));
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 		StringBuilder builder = new StringBuilder();
@@ -213,11 +265,14 @@ public class YouRoomAccess {
 	private String getSignature(String signatureBaseString, String keyString)
 			throws NoSuchAlgorithmException, InvalidKeyException,
 			UnsupportedEncodingException {
+		String base = signatureBaseString;
+
 		Mac mac = Mac.getInstance(ALGOTITHM);
 		Key key = new SecretKeySpec(keyString.getBytes(), ALGOTITHM);
 		mac.init(key);
-		byte[] digest = mac.doFinal(signatureBaseString.getBytes());
-		return encodeURL(Base64.encodeBytes(digest));
+		byte[] digest = mac.doFinal(base.getBytes());
+		String result = encodeURL(Base64.encodeBytes(digest));
+		return result;
 	}
 
 	/*
