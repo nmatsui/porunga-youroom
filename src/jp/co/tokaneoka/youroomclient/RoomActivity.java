@@ -181,7 +181,8 @@ public class RoomActivity extends Activity implements OnClickListener {
 			if (count == -1) {
 				GetEntryTask task = new GetEntryTask(descendantsCount, roomId,
 						roomEntry);
-				task.execute(roomEntry.getId());
+//				task.execute(roomEntry.getId());
+				task.execute(roomEntry);
 			} else {
 				// TODO レイアウト修正直書き
 				descendantsCount.setText("[ " + count + "comments ] > ");
@@ -201,7 +202,8 @@ public class RoomActivity extends Activity implements OnClickListener {
 		}
 	}
 
-	public class GetEntryTask extends AsyncTask<Integer, Void, String> {
+//	public class GetEntryTask extends AsyncTask<Integer, Void, String> {
+	public class GetEntryTask extends AsyncTask<YouRoomEntry, Void, String> {
 
 		private String roomId;
 		String count;
@@ -216,15 +218,17 @@ public class RoomActivity extends Activity implements OnClickListener {
 		}
 
 		@Override
-		protected String doInBackground(Integer... entryIds) {
-
-			YouRoomUtil youRoomUtil = new YouRoomUtil(getApplication());
-			HashMap<String, String> oAuthTokenMap = youRoomUtil
-					.getOauthTokenFromLocal();
-			YouRoomCommand youRoomCommand = new YouRoomCommand(oAuthTokenMap);
-			String entry = youRoomCommand.getEntry(roomId,
-					String.valueOf(entryIds[0]));
-
+//		protected String doInBackground(Integer... entryIds) {
+//			YouRoomUtil youRoomUtil = new YouRoomUtil(getApplication());
+//			HashMap<String, String> oAuthTokenMap = youRoomUtil
+//					.getOauthTokenFromLocal();
+//			YouRoomCommand youRoomCommand = new YouRoomCommand(oAuthTokenMap);
+//			String entry = youRoomCommand.getEntry(roomId,
+//					String.valueOf(entryIds[0]));
+		protected String doInBackground(YouRoomEntry... entries) {
+			YouRoomProxy proxy = new YouRoomProxy(getApplication());
+			String entry = proxy.getEntry(roomId, String.valueOf(entries[0].getId()), entries[0].getUpdatedTime());
+			
 			try {
 				JSONObject json = new JSONObject(entry);
 				count = json.getJSONObject("entry").getString(

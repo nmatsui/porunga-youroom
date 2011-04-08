@@ -28,8 +28,10 @@ import org.apache.http.protocol.HTTP;
 
 public class YouRoomAccess {
 
-	private static final String CONSUMER_KEY = "****";
-	private static final String CONSUMER_SECRET = "****";
+	//private static final String CONSUMER_KEY = "****";
+	//private static final String CONSUMER_SECRET = "****";
+	private static final String CONSUMER_KEY = "2NJ3lkuTDVGR5ec5hZKc";
+	private static final String CONSUMER_SECRET = "bbCfmLXEgcOUiaPbpWo9Oba8OZh4ZIK4Epjjfpv9";
 
 	private static final String SIGNATURE_METHOD = "HMAC-SHA1";
 	private static final String OAUTH_VERSION = "1.0";

@@ -1,22 +1,17 @@
 package jp.co.tokaneoka.youroomclient;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
-
-import jp.co.tokaneoka.youroomclient.R;
-import jp.co.tokaneoka.youroomclient.RoomActivity.GetRoomEntryTask;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.app.Activity;
-import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -180,14 +175,19 @@ public class EntryActivity extends Activity implements OnClickListener {
 	}
 
 	private ArrayList<YouRoomEntry> getChildEntryList(String roomId,
-			String entryId, int level) {
-		YouRoomUtil youRoomUtil = new YouRoomUtil(getApplication());
-		HashMap<String, String> oAuthTokenMap = youRoomUtil
-				.getOauthTokenFromLocal();
-		YouRoomCommand youRoomCommand = new YouRoomCommand(oAuthTokenMap);
-
-		String entry = "";
-		entry = youRoomCommand.getEntry(roomId, entryId);
+			String entryId, int level, String updated) {
+//	private ArrayList<YouRoomEntry> getChildEntryList(String roomId,
+//			String entryId, int level) {
+//		YouRoomUtil youRoomUtil = new YouRoomUtil(getApplication());
+//		HashMap<String, String> oAuthTokenMap = youRoomUtil
+//				.getOauthTokenFromLocal();
+//		YouRoomCommand youRoomCommand = new YouRoomCommand(oAuthTokenMap);
+//
+//		String entry = "";
+//		entry = youRoomCommand.getEntry(roomId, entryId);
+		YouRoomProxy proxy = new YouRoomProxy(getApplication());
+		String entry = proxy.getEntry(roomId, entryId, updated);
+		
 		ArrayList<YouRoomEntry> dataList = new ArrayList<YouRoomEntry>();
 		try {
 			JSONObject json = new JSONObject(entry);
@@ -240,8 +240,10 @@ public class EntryActivity extends Activity implements OnClickListener {
 			roomChildEntry = roomChildEntries[0];
 			String entryId = String.valueOf(roomChildEntry.getId());
 
+//			ArrayList<YouRoomEntry> dataList = getChildEntryList(roomId,
+//					entryId, roomChildEntry.getLevel() + 1);
 			ArrayList<YouRoomEntry> dataList = getChildEntryList(roomId,
-					entryId, roomChildEntry.getLevel() + 1);
+					entryId, roomChildEntry.getLevel() + 1, roomChildEntry.getUpdatedTime());
 
 			if (dataList.size() > 0) {
 				for (int i = 0; i < dataList.size(); i++) {
