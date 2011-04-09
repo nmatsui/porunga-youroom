@@ -185,7 +185,7 @@ public class EntryActivity extends Activity implements OnClickListener {
 //
 //		String entry = "";
 //		entry = youRoomCommand.getEntry(roomId, entryId);
-		YouRoomProxy proxy = new YouRoomProxy(getApplication());
+		YouRoomProxy proxy = new YouRoomProxy(this);
 		String entry = proxy.getEntry(roomId, entryId, updated);
 		
 		ArrayList<YouRoomEntry> dataList = new ArrayList<YouRoomEntry>();
